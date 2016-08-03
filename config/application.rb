@@ -34,7 +34,7 @@ module Railsroot
     config.autoload_paths += %W(#{config.root}/lib)
 
     config.secret_key_base = ENV['SECRET_KEY_BASE']
-    
+
     ActionMailer::Base.smtp_settings = {
       address: 'smtp.sendgrid.net',
       port: 25,

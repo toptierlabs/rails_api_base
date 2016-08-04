@@ -3,56 +3,59 @@
 require 'spec_helper'
 
 describe Api::V1::PasswordsController do
+  let!(:user)          { create(:user, password: 'mypass123') }
+  let(:password_token) { user.send(:set_reset_password_token) }
+
   before :each do
     ActionMailer::Base.delivery_method = :test
     ActionMailer::Base.perform_deliveries = true
     ActionMailer::Base.deliveries = []
     Delayed::Worker.delay_jobs = false
     @request.env['devise.mapping'] = Devise.mappings[:user]
-    @user = FactoryGirl.create(
-      :user,
-      password: 'mypass123'
-    )
-    @password_token = @user.send :set_reset_password_token
   end
 
   context 'with valid params' do
-    it 'should success and send an email' do
-      post  :create,
-            user: {
-              email: @user.email
-            },
-            format: 'json'
-      expect(response.response_code).to be 204
-      expect(ActionMailer::Base.deliveries.count).to eq 1
+    let(:new_password) { '123456789' }
+
+    it 'returns a successful response' do
+      post :create, user: { email: user.email }, format: 'json'
+
+      expect(response.response_code).to be(204)
+    end
+
+    it 'sends an email' do
+      expect { post :create, user: { email: user.email }, format: 'json' }
+        .to change { ActionMailer::Base.deliveries.count }.by(1)
     end
 
     # reset_password_token is harcoded to match the encryption of the one stored on the db
-    it 'should change the password' do
+    it 'returns a successful response' do
       put :update,
           user: {
-            password: '123456789',
-            password_confirmation: '123456789',
-            reset_password_token: @password_token
+            password: new_password,
+            password_confirmation: new_password,
+            reset_password_token: password_token
           },
           format: 'json'
-      expect(response.response_code).to be 204
+
+      expect(response.response_code).to be(204)
     end
   end
 
   context 'with invalid params' do
-    it 'should not success' do
-      post  :create,
-            user: {
-              email: 'notvalid@lala.com'
-            },
-            format: 'json'
-      expect(response.status).to eq 400
-      expect(ActionMailer::Base.deliveries.count).to eq 0
+    it 'does not return a successful response' do
+      post :create, user: { email: 'notvalid@lala.com' }, format: 'json'
+
+      expect(response.status).to eq(400)
+    end
+
+    it 'does not send an email' do
+      expect { post :create, user: { email: 'notvalid@lala.com' }, format: 'json' }
+        .to change { ActionMailer::Base.deliveries.count }.by(0)
     end
 
     # reset_password_token is harcoded to match the encryption of the one stored on the db
-    it 'should not change the password if confirmation does not match' do
+    it 'does not change the password if confirmation does not match' do
       put :update,
           user: {
             password: '123456789',
@@ -60,10 +63,11 @@ describe Api::V1::PasswordsController do
             reset_password_token: '59J1m_UzbFzfiY_4xSXn'
           },
           format: 'json'
-      expect(response.status).to eq 400
+
+      expect(response.status).to eq(400)
     end
 
-    it 'should not change the password if token is invalid' do
+    it 'does not change the password if token is invalid' do
       put :update,
           user: {
             password: '123456789',
@@ -71,8 +75,8 @@ describe Api::V1::PasswordsController do
             reset_password_token: 'not valid token'
           },
           format: 'json'
-      parsed_response = JSON.parse(response.body)
-      expect(response.status).to eq 400
+
+      expect(response.status).to eq(400)
     end
   end
 end

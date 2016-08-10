@@ -105,9 +105,10 @@ Facebook Login
 ```
 curl -X POST -H "Accept: application/json" -H "Content-Type: application/json"\
 http://localhost:3000/api/v1/users/facebook_login -d\
-  '{ "user":
+  '{"type": "facebook" 
+    "user":
     {
-      "facebook_id":"id1234",
+      "fb_access_token":"4CC3355T0K3N"
       "first_name":"face",
       "last_name": "book",
       "email":"face@book.com"

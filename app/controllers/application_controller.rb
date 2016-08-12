@@ -9,4 +9,5 @@ class ApplicationController < ActionController::Base
   rescue_from ActionController::ParameterMissing do
     render json: { error: 'Parameter Missing' }, status: 400
   end
+
 end

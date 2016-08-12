@@ -1,15 +1,28 @@
 # encoding: utf-8
+require 'koala'
+
 
 module Api
   module V1
     class SessionsController < Devise::SessionsController
       skip_before_filter :verify_authenticity_token, if: :json_request?
 
+
+      rescue_from ActionController::InvalidAuthenticityToken, with: :render_forbidden_access
+
       # POST /resource/sign_in
       def create
         if params[:type] == 'facebook'
-          facebook_id = obtain_facebook_id(params[:user][:fb_access_token])
-          resource = User.find_or_create_by_fb user_params.merge({facebook_id: facebook_id})
+          user = obtain_facebook_user(params[:fb_access_token])
+          render json: { error: 'Not Authorized' }, status: :forbidden and return if user.nil?
+          return unless user
+          user_params = {
+           facebook_id: user['id'],
+           first_name:  user['first_name'],
+           last_name:   user['last_name'],
+           email:       user['email']
+          }
+          resource = User.find_or_create_by_fb user_params
         else
           resource = warden.authenticate! scope: resource_name, recall: "#{controller_path}#failure"
         end
@@ -34,27 +47,19 @@ module Api
         render json: { errors: ['Login failed.'] }, status: :bad_request
       end
 
-      private
-
-      def user_params
-        params.require(:user).permit(
-          :username, :first_name,
-          :last_name, :facebook_id, :email,
-          :welcome_screen, :how_to_trade,
-          :notifications
-        )
-      end
-
       protected
 
       def json_request?
         request.format.json?
       end
 
-      def obtain_facebook_id(fb_access_token)
-          res = Faraday.get 'https://graph.facebook.com/me' , { access_token: fb_access_token}
-          error!('401 Unauthorized', 401) if res.status != 200
-          JSON.parse(res.body)['id']
+      def obtain_facebook_user(fb_access_token)
+        begin
+          graph = Koala::Facebook::API.new(fb_access_token)
+          graph.get_object("me?fields=first_name,last_name,email")
+        rescue Koala::Facebook::AuthenticationError => ex
+          return nil
+        end
       end
     end
   end

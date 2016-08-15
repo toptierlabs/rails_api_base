@@ -7,9 +7,6 @@ module Api
     class SessionsController < Devise::SessionsController
       skip_before_filter :verify_authenticity_token, if: :json_request?
 
-
-      rescue_from ActionController::InvalidAuthenticityToken, with: :render_forbidden_access
-
       # POST /resource/sign_in
       def create
         if params[:type] == 'facebook'

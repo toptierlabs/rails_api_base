@@ -1,5 +1,4 @@
 # encoding: utf-8
-require 'koala'
 
 
 module Api
@@ -12,7 +11,6 @@ module Api
         if params[:type] == 'facebook'
           user = obtain_facebook_user(params[:fb_access_token])
           render json: { error: 'Not Authorized' }, status: :forbidden and return if user.nil?
-          return unless user
           user_params = {
            facebook_id: user['id'],
            first_name:  user['first_name'],
@@ -53,7 +51,7 @@ module Api
       def obtain_facebook_user(fb_access_token)
         begin
           graph = Koala::Facebook::API.new(fb_access_token)
-          graph.get_object("me?fields=first_name,last_name,email")
+          graph.get_object('me?fields=first_name,last_name,email')
         rescue Koala::Facebook::AuthenticationError => ex
           return nil
         end

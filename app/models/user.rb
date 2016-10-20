@@ -35,9 +35,15 @@ class User < ActiveRecord::Base
   include Facebookeable
 
   validates :username, uniqueness: true, allow_blank: true, allow_nil: true
+  validates :email, uniqueness: true, allow_blank: true, allow_nil: true
+  validates :password, presence: true unless :facebook_id.present?
+  validates :facebook_id, uniqueness: true unless :password.present?
+
+  def to_s
+    username
+  end
 
   def full_name
-    return username unless first_name.present?
-    "#{first_name} #{last_name}"
-  end
+    username.presence || "#{first_name} #{last_name}"
+  end 
 end

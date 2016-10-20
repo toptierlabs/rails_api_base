@@ -8,12 +8,12 @@ module Api
       layout false
       respond_to :json
 
-      rescue_from ActiveRecord::RecordNotFound,        with: :render_not_found
-      rescue_from ActiveRecord::RecordInvalid,         with: :render_record_invalid
-      rescue_from ActionController::RoutingError,      with: :render_not_found
-      rescue_from ActionController::UnknownController, with: :render_not_found
-      rescue_from AbstractController::ActionNotFound,  with: :render_not_found
-      rescue_from PermissionsHelper::ForbiddenAccess,  with: :render_forbidden_access
+      rescue_from ActiveRecord::RecordNotFound,         with: :render_not_found
+      rescue_from ActiveRecord::RecordInvalid,          with: :render_record_invalid
+      rescue_from ActionController::RoutingError,       with: :render_not_found
+      rescue_from ActionController::UnknownController,  with: :render_not_found
+      rescue_from AbstractController::ActionNotFound,   with: :render_not_found
+      rescue_from PermissionsHelper::ForbiddenAccess,   with: :render_forbidden_access
 
       def status
         render json: { online: true }
